@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>密码短语生成器 - 易记且安全的密码</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 to-slate-800 min-h-screen flex items-center justify-center p-4 text-white">
+
+    <div class="max-w-md w-full bg-slate-800/50 backdrop-blur-sm rounded-2xl shadow-2xl border border-slate-700 p-8 fade-in">
+        <!-- 标题 -->
+        <div class="text-center mb-8">
+            <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-cyan-400">
+                密码短语生成器
+            </h1>
+            <p class="text-slate-400 text-sm mt-2">生成像 "correct-horse-battery-staple" 这样既安全又好记的密码</p>
+        </div>
+
+        <!-- 设置区域 -->
+        <div class="mb-6 space-y-4">
+            <div class="flex justify-between items-center">
+                <label class="text-sm font-medium text-slate-300">单词数量</label>
+                <select id="wordCount" class="bg-slate-900 border border-slate-700 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5">
+                    <option value="3">3 个单词 (较简单)</option>
+                    <option value="4" selected>4 个单词 (推荐)</option>
+                    <option value="5">5 个单词 (极安全)</option>
+                    <option value="6">6 个单词 (堡垒级)</option>
+                </select>
+            </div>
+            
+            <div class="flex justify-between items-center">
+                <label class="text-sm font-medium text-slate-300">分隔符</label>
+                <select id="separator" class="bg-slate-900 border border-slate-700 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5">
+                    <option value="-">短横线 (-)</option>
+                    <option value="_">下划线 (_)</option>
+                    <option value=".">点号 (.)</option>
+                    <option value=" ">空格 ( )</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 结果展示区域 -->
+        <div class="relative group mb-6">
+            <div class="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-center min-h-[60px] flex items-center justify-center break-all">
+                <span id="result" class="text-lg font-mono text-indigo-300 tracking-wide">点击生成...</span>
+            </div>
+            <!-- 复制按钮 -->
+            <button onclick="copyResult()" class="absolute right-2 top-1/2 -translate-y-1/2 bg-slate-800 hover:bg-slate-700 text-slate-300 p-2 rounded-lg transition-all opacity-0 group-hover:opacity-100 border border-slate-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- 操作按钮 -->
+        <button onclick="generatePassphrase()" class="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg transform transition hover:-translate-y-0.5 active:translate-y-0">
+            生成密码短语
+        </button>
+
+        <!-- 底部导航 -->
+        <div class="mt-8 pt-6 border-t border-slate-700 flex justify-between text-xs text-slate-500">
+            <a href="index.html" class="hover:text-indigo-400 transition-colors">← 返回密码生成器</a>
+            <a href="strength.html" class="hover:text-indigo-400 transition-colors">去检测强度 →</a>
+        </div>
+    </div>
+
+    <script>
+        // 一个包含约 100 个常用英文单词的小型词库
+        const wordList = [
+            "correct", "horse", "battery", "staple", "apple", "river", "mountain", "forest", 
+            "ocean", "sky", "cloud", "rain", "snow", "fire", "earth", "wind", "stone", 
+            "sand", "tree", "flower", "bird", "fish", "tiger", "lion", "wolf", "bear", 
+            "eagle", "falcon", "hawk", "owl", "fox", "deer", "moon", "sun", "star", 
+            "planet", "comet", "galaxy", "universe", "space", "time", "light", "shadow", 
+            "dark", "bright", "color", "sound", "music", "song", "dance", "art", 
+            "book", "story", "poem", "dream", "hope", "wish", "love", "peace", 
+            "war", "battle", "sword", "shield", "armor", "castle", "tower", "bridge", 
+            "road", "path", "journey", "adventure", "quest", "hero", "king", "queen", 
+            "prince", "knight", "wizard", "magic", "spell", "dragon", "phoenix", "ghost", 
+            "spirit", "soul", "mind", "body", "heart", "blood", "bone", "skin", 
+            "eye", "ear", "hand", "foot", "head", "face", "smile", "laugh", 
+            "cry", "tear", "joy", "fun", "game", "play", "work", "rest", 
+            "sleep", "wake", "eat", "drink", "water", "food", "bread", "meat", 
+            "fruit", "cake", "candy", "sugar", "salt", "pepper", "spice", "herb"
+        ];
+
+        function generatePassphrase() {
+            const count = parseInt(document.getElementById('wordCount').value);
+            const separator = document.getElementById('separator').value;
+            let passphrase = [];
+            
+            // 使用 crypto.getRandomValues 保证随机性安全
+            const array = new Uint32Array(count);
+            window.crypto.getRandomValues(array);
+
+            for (let i = 0; i < count; i++) {
+                const randomIndex = array[i] % wordList.length;
+                // 首字母大写处理（可选，这里为了易读性保持全小写或首字母大写均可，这里演示全小写加连接符）
+                passphrase.push(wordList[randomIndex]);
+            }
+
+            const resultStr = passphrase.join(separator);
+            document.getElementById('result').innerText = resultStr;
+            
+            // 添加一点动画效果
+            const resultEl = document.getElementById('result');
+            resultEl.classList.remove('fade-in');
+            void resultEl.offsetWidth; // 触发重绘
+            resultEl.classList.add('fade-in');
+        }
+
+        function copyResult() {
+            const text = document.getElementById('result').innerText;
+            if (text === '点击生成...') return;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = document.getElementById('result').innerText;
+                document.getElementById('result').innerText = "已复制!";
+                document.getElementById('result').classList.add('text-green-400');
+                
+                setTimeout(() => {
+                    document.getElementById('result').innerText = originalText;
+                    document.getElementById('result').classList.remove('text-green-400');
+                }, 1500);
+            });
+        }
+
+        // 页面加载时自动生成一次
+        window.onload = generatePassphrase;
+    </script>
+</body>
+</html>
